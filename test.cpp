@@ -9,7 +9,7 @@
 #include <Eigen/IterativeLinearSolvers>
 #include <Eigen/Dense>
 #include <stdio.h>
-//#include <igl/opengl/glfw/Viewer.h>
+#include <igl/opengl/glfw/Viewer.h>
 using namespace std;
 
 
@@ -84,15 +84,40 @@ int main(int argc, char* argv[])
         fprintf(stdout, "decom fail\n");
         return 0;
     }
-    Eigen::MatrixXd x = solver.solve(uv0);
-    Eigen::MatrixXd y = solver.solve(uv1);
+    Eigen::MatrixXd x; x = solver.solve(uv0);
+    Eigen::MatrixXd y; y = solver.solve(uv1);
     if(solver.info()!=Eigen::Success) {
         // solving failed
         fprintf(stdout, "solver fail\n");
-        return 0;
+        fprintf(stdout, "using least square incerse\n");
     }
-    //Eigen::MatrixXd coord0 = solver.compute(Adj).solve(uv0);
-
+    Eigen::MatrixXd mtx = Adj.transpose()*Adj;
+    mtx = mtx.inverse()*Adj.transpose();
+    x = mtx*uv0;
+    y = mtx*uv1;
+ 
+    Eigen::MatrixXd V_uv(x.rows(), x.cols() + y.cols());
+    V_uv << x, y;
+     // Plot the mesh
+    igl::opengl::glfw::Viewer viewer;
+    viewer.data().set_mesh(V, F);
+    viewer.data().set_uv(V_uv);
+    viewer.callback_key_pressed = 
+    [&V,&V_uv,&F](igl::opengl::glfw::Viewer& viewer, unsigned int key, int /*mod*/)
+    {
+      if(key == '3' || key == '2')
+      {
+        // Plot the 3D mesh or 2D UV coordinates
+        viewer.data().set_vertices(key=='3'?V:V_uv);
+        viewer.data().compute_normals();
+        viewer.core().align_camera_center(key=='3'?V:V_uv,F);
+        // key press was used
+        return true;
+      }
+      // key press not used
+      return false;
+    };
+    viewer.launch();
     FILE* fp;
     fp =  fopen(argv[2], "w");    
 
