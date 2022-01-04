@@ -90,15 +90,17 @@ int main(int argc, char* argv[])
         // solving failed
         fprintf(stdout, "solver fail\n");
         fprintf(stdout, "using least square incerse\n");
-    }
-    Eigen::MatrixXd mtx = Adj.transpose()*Adj;
-    mtx = mtx.inverse()*Adj.transpose();
-    x = mtx*uv0;
-    y = mtx*uv1;
+        Eigen::MatrixXd mtx = Adj.transpose()*Adj;
+        mtx = mtx.inverse()*Adj.transpose();
+        x = mtx*uv0;
+        y = mtx*uv1;
  
+    }
+
+
     Eigen::MatrixXd V_uv(x.rows(), x.cols() + y.cols());
     V_uv << x, y;
-     // Plot the mesh
+    // Plot the mesh
     igl::opengl::glfw::Viewer viewer;
     viewer.data().set_mesh(V, F);
     viewer.data().set_uv(V_uv);
